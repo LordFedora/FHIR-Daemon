@@ -17,7 +17,7 @@ namespace FHIR_daemon
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[]
             {
-                new Service1()
+                new FHIR_Daemon_Service()
             };
             ServiceBase.Run(ServicesToRun);
         }
