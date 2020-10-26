@@ -8,11 +8,13 @@ using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO.Pipes;
 
 namespace FHIR_daemon
 {
     public partial class FHIR_Daemon_Service : ServiceBase
     {
+        static string NAME = "FHIR_DAEMON";
         private int eventId = 0;
         private Timer timer = null;
 
