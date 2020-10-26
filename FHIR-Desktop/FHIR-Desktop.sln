@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.489
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FHIR-Desktop", "FHIR-Desktop\FHIR-Desktop.csproj", "{5AA5A03D-0758-4884-83D8-CC1547B611AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AA5A03D-0758-4884-83D8-CC1547B611AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AA5A03D-0758-4884-83D8-CC1547B611AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AA5A03D-0758-4884-83D8-CC1547B611AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AA5A03D-0758-4884-83D8-CC1547B611AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {81670600-1469-4AB6-A1BE-A6513EF6317C}
+	EndGlobalSection
+EndGlobal
