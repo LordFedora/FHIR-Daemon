@@ -13,6 +13,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Timers;
+using Microsoft.Toolkit.Uwp.Notifications;
+using Windows.UI;
+using Windows.UI.Not
 
 namespace FHIR_App
 {
@@ -22,12 +25,12 @@ namespace FHIR_App
     public partial class MainWindow : Window
     {
         static private Timer mainLoopTimer;
-        static private Label mainLabel;
 
         public MainWindow()
         {
             InitializeComponent();
-            mainLabel = MainLabel;
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<ToastNotificationActivator>("TEMP.TODO");
+            DesktopNotificationManagerCompat.RegisterActivator<ToastNotificationActivator>();
 
             mainLoopTimer = new Timer(1000 * 30);
             mainLoopTimer.AutoReset = true;
@@ -37,7 +40,12 @@ namespace FHIR_App
 
         private static void onTimerElapsed(Object source, ElapsedEventArgs e)
         {
-            mainLabel.Content += "!";
+            ToastContent toastContent = new ToastContentBuilder()
+                .AddToastActivationInfo("action=viewConversation&conversationId=5", ToastActivationType.Foreground)
+                .AddText("Hello World!")
+                .GetToastContent();
+
+            var toast = new ToastNotification(toastContent.GetXml());
         }
     }
 }
