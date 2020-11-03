@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 using System.Timers;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Windows.UI;
-using Windows.UI.Not
+using Windows.UI.Notifications;
 
 namespace FHIR_App
 {
@@ -29,7 +29,7 @@ namespace FHIR_App
         public MainWindow()
         {
             InitializeComponent();
-            DesktopNotificationManagerCompat.RegisterAumidAndComServer<ToastNotificationActivator>("TEMP.TODO");
+            DesktopNotificationManagerCompat.RegisterAumidAndComServer<ToastNotificationActivator>("BIA.FHIR_DEAMON");
             DesktopNotificationManagerCompat.RegisterActivator<ToastNotificationActivator>();
 
             mainLoopTimer = new Timer(1000 * 30);
@@ -41,11 +41,17 @@ namespace FHIR_App
         private static void onTimerElapsed(Object source, ElapsedEventArgs e)
         {
             ToastContent toastContent = new ToastContentBuilder()
-                .AddToastActivationInfo("action=viewConversation&conversationId=5", ToastActivationType.Foreground)
+                //.AddToastActivationInfo("action=viewConversation&conversationId=5", ToastActivationType.Foreground)
                 .AddText("Hello World!")
+                .SetToastScenario(ToastScenario.Reminder)
                 .GetToastContent();
+            
 
             var toast = new ToastNotification(toastContent.GetXml());
+
+            Console.WriteLine("Toast?");
+            DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
+
         }
     }
 }
