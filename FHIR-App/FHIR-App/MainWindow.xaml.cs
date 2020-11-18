@@ -28,8 +28,8 @@ namespace FHIR_App
     public partial class MainWindow : Window
     {
         static private Timer mainLoopTimer;
-        static private String BaseAPIURL = "http://test.fhir.org/r2/AuditEvent/1/_history/1?_format=json";
-        //http://test.fhir.org/r2/AuditEvent/_search?_lastUpdated=gt2020-11-06T21:52:30.300Z&_sort=_lastUpdated&_format=json&_count=10
+        static private String BaseAPIURL = "http://test.fhir.org/r4/AuditEvent/1/_history/1?_format=json";
+        //http://test.fhir.org/r4/AuditEvent/_search?_lastUpdated=gt2020-11-06T21:52:30.300Z&_sort=_lastUpdated&_format=json&_count=10
 
 
         public MainWindow()
@@ -40,7 +40,7 @@ namespace FHIR_App
 
             Microsoft.Win32.RegistryKey key;
             key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
-            key.SetValue("BIA_SERVER_NAME_1", "http://test.fhir.org/r2");
+            key.SetValue("BIA_SERVER_NAME_1", "http://test.fhir.org/r4");
             DateTime timestamp;
             dynamic value = key.GetValue("BIA_LAST_UPDATED_1");
             if (value is null)
