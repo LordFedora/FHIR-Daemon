@@ -64,8 +64,40 @@ namespace FHIR_App
         private static void onTimerElapsed(Object source, ElapsedEventArgs e)
         {
 
+            dynamic temp = getJsonFromURL(BaseAPIURL);
+
+            String text = temp?.text?.div;
+
+            createToast(text);
+
+        }
+
+        private static void updateKey(int index, DateTime time)
+        {
+            Microsoft.Win32.RegistryKey key;
+            key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
+            key.SetValue("BIA_LAST_UPDATED_"+index, time.ToFileTimeUtc());
+ 
+            key.Close();
+        }
+
+        private static DateTime getKey(int index)
+        {
+            Microsoft.Win32.RegistryKey key;
+            key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
+            dynamic time = key.GetValue("BIA_LAST_UPDATED_" + index);
+
+            DateTime iReturn = DateTime.FromFileTimeUtc(time);
+
+            key.Close();
+
+            return iReturn;
+        }
+
+        private static object getJsonFromURL(string url)
+        {
             String content = "";
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(BaseAPIURL);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.AutomaticDecompression = DecompressionMethods.GZip;
             using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
             using (Stream stream = response.GetResponseStream())
@@ -75,22 +107,25 @@ namespace FHIR_App
             }
 
 
-            dynamic temp = JsonConvert.DeserializeObject(content);
+            return JsonConvert.DeserializeObject(content);
+        }
 
-            String text = temp?.text?.div;
-
+        private static void createToast(string text)
+        {
             ToastContent toastContent = new ToastContentBuilder()
                 //.AddToastActivationInfo("action=viewConversation&conversationId=5", ToastActivationType.Foreground)
                 .AddText(text)
                 .SetToastScenario(ToastScenario.Reminder)
                 .GetToastContent();
-            
+
 
             var toast = new ToastNotification(toastContent.GetXml());
-
-            Console.WriteLine("Toast?");
+            
             DesktopNotificationManagerCompat.CreateToastNotifier().Show(toast);
-
         }
+
+
+
+
     }
 }
