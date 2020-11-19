@@ -28,9 +28,14 @@ namespace FHIR_App
     public partial class MainWindow : Window
     {
         static private Timer mainLoopTimer;
-        static private String BaseAPIURL = "http://test.fhir.org/r4/AuditEvent/1/_history/1?_format=json";
-        //http://test.fhir.org/r4/AuditEvent/_search?_lastUpdated=gt2020-11-06T21:52:30.300Z&_sort=_lastUpdated&_format=json&_count=10
+        static private String BaseAPIURL = "http://test.fhir.org/r4";
+        static private String SEARCH_PREFIX = "/AuditEvent/_search?_lastUpdated=gt";
+        static private String SEARCH_SUFFIX = "Z&_sort=_lastUpdated&_format=json&_count=10";
 
+        static private String SEARCH_INITIAL = "/AuditEvent/_search?_sort=_lastUpdated&_format=json&_count=10";
+
+        //http://test.fhir.org/r4/AuditEvent/_search?_lastUpdated=gt2020-11-06T21:52:30.300Z&_sort=_lastUpdated&_format=json&_count=10
+        static private DateTime timestamp;
 
         public MainWindow()
         {
@@ -41,16 +46,15 @@ namespace FHIR_App
             Microsoft.Win32.RegistryKey key;
             key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
             key.SetValue("BIA_SERVER_NAME_1", "http://test.fhir.org/r4");
-            DateTime timestamp;
             dynamic value = key.GetValue("BIA_LAST_UPDATED_1");
             if (value is null)
             {
-                key.SetValue("BIA_LAST_UPDATED_1", -1);
-                timestamp = DateTime.FromFileTimeUtc(1);
+                timestamp = DateTime.MinValue; //because it can't be null for some reason
             }
             else
             {
-                timestamp = DateTime.FromFileTimeUtc(value);
+                long time = long.Parse(value);
+                timestamp = DateTime.FromFileTimeUtc(time);
             }
             key.Close();
 
@@ -64,11 +68,34 @@ namespace FHIR_App
         private static void onTimerElapsed(Object source, ElapsedEventArgs e)
         {
 
-            dynamic temp = getJsonFromURL(BaseAPIURL);
+            string url = "";
+            if(timestamp == DateTime.MinValue)
+            {
+                url = BaseAPIURL + SEARCH_INITIAL;
+            }
+            else
+            {
+                url = BaseAPIURL + SEARCH_PREFIX + timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fff") + SEARCH_SUFFIX;
+            }
+            dynamic temp = getJsonFromURL(url);
 
-            String text = temp?.text?.div;
+            dynamic entryArray = temp?.entry;
 
-            createToast(text);
+            string lastUpdated = "";
+
+            foreach(dynamic entry in entryArray)
+            {
+                string text = "";
+                text += entry?.resource?.type?.display;
+                text += " (";
+                text += entry?.resource?.subtype?[0]?.display;
+                text += ")";
+                createToast(text);
+                lastUpdated = entry?.resource?.meta?.lastUpdated;
+            }
+
+            timestamp = DateTime.Parse(lastUpdated);
+            updateKey(1, timestamp);
 
         }
 
