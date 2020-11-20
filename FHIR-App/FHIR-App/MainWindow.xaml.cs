@@ -37,11 +37,18 @@ namespace FHIR_App
         //http://test.fhir.org/r4/AuditEvent/_search?_lastUpdated=gt2020-11-06T21:52:30.300Z&_sort=_lastUpdated&_format=json&_count=10
         static private DateTime timestamp;
 
+        private static List<Filter> Filters;
+
         public MainWindow()
         {
             InitializeComponent();
             DesktopNotificationManagerCompat.RegisterAumidAndComServer<ToastNotificationActivator>("BIA.FHIR_DEAMON");
             DesktopNotificationManagerCompat.RegisterActivator<ToastNotificationActivator>();
+
+            Filters = new List<Filter>();
+
+            Filters.Add(new Filter(FilterStates.HIDE, new PathCondition("resource", new PathCondition("type", new ValueCondition("display", "User Authentication")))));
+
 
             Microsoft.Win32.RegistryKey key;
             key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
@@ -85,12 +92,33 @@ namespace FHIR_App
 
             foreach(dynamic entry in entryArray)
             {
-                string text = "";
-                text += entry?.resource?.type?.display;
-                text += " (";
-                text += entry?.resource?.subtype?[0]?.display;
-                text += ")";
-                createToast(text);
+                bool pass = true; //default case is it passes
+
+                foreach(Filter f in Filters)
+                {
+                    bool filterPass = f.CheckConditions(entry);
+                    if(filterPass && f.getState() == FilterStates.SHOW)
+                    {
+                        pass = true;
+                        break;
+                    }
+                    if(filterPass && f.getState() == FilterStates.HIDE)
+                    {
+                        pass = false;
+                        break;
+                    }
+                }
+
+
+                if (pass)
+                {
+                    string text = "";
+                    text += entry?.resource?.type?.display;
+                    text += " (";
+                    text += entry?.resource?.subtype?[0]?.display;
+                    text += ")";
+                    createToast(text);
+                }
                 lastUpdated = entry?.resource?.meta?.lastUpdated;
             }
 
