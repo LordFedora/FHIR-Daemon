@@ -47,7 +47,7 @@ namespace FHIR_App
 
             Filters = new List<Filter>();
 
-            Filters.Add(new Filter(FilterStates.HIDE, new PathCondition("resource", new PathCondition("type", new ValueCondition("display", "User Authentication")))));
+            Filters.Add(new Filter(FilterStates.HIDE, new PathCondition("resource//type", new ValueCondition("display", "User Authentication"))));
 
 
             Microsoft.Win32.RegistryKey key;

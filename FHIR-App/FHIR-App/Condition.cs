@@ -26,7 +26,10 @@ namespace FHIR_App
 
         public bool CheckCondition(JToken input)
         {
-            dynamic subPath = input?[PathStep];
+            char[] seperators = new char[] { '/' };
+            String[] paths = PathStep.Split(seperators,StringSplitOptions.RemoveEmptyEntries);
+            dynamic subPath = input;
+            foreach(String path in paths) subPath = subPath?[path];
             if (subPath is null) return false;
             return SubCondition.CheckCondition(subPath);
         }
