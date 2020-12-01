@@ -108,6 +108,72 @@ namespace FHIR_App
         }
     }
 
+    public class TypeCondition : Condition
+    {
+        String Type;
+        String SubType;
+
+        public TypeCondition(String type, String subType)
+        {
+            Type = type;
+            SubType = subType;
+        }
+
+        public TypeCondition(String type)
+        {
+            Type = type;
+            SubType = null;
+        }
+
+        public bool CheckCondition(JToken input)
+        {
+            dynamic resource = input?["resource"];
+            if(resource?["type"]?["display"].ToString() != Type)
+            {
+                return false;
+            }
+            if(!(SubType is null) && resource?["subtype"]?["display"].ToString() != SubType)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    public class ValuesCondition : Condition
+    {
+        private String Key;
+        private String[] Values;
+
+        public ValuesCondition(String key, String[] values)
+        {
+            Key = key;
+            Values = values;
+        }
+
+        public bool CheckCondition(JToken input)
+        {
+            dynamic value = input?[Key];
+            if (value is null) return false;
+            return Array.IndexOf(Values, value) > -1; //What the honest fuck, how is this the *correct* way to do this
+        }
+    }
+
+    public class ExistsCondition : Condition
+    {
+        private String Key;
+
+        public ExistsCondition(String key)
+        {
+            Key = key;
+        }
+
+        public bool CheckCondition(JToken input)
+        {
+            dynamic value = input?[Key];
+            return !(value is null);
+        }
+    }
 
 
 
