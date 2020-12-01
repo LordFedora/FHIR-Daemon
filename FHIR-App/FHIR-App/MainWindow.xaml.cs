@@ -118,9 +118,11 @@ namespace FHIR_App
                     }
                     lastUpdated = entry?.resource?.meta?.lastUpdated;
                 }
+
+                timestamp = DateTime.Parse(lastUpdated);
+                updateKey(1, timestamp);
+                if (entryArray.Count < PAGE_COUNT) break; //if we didn't get a full page then we're at the present and we'll never get a full page
             }
-            timestamp = DateTime.Parse(lastUpdated);
-            updateKey(1, timestamp);
 
         }
 
