@@ -89,6 +89,21 @@ namespace FHIR_App
         }
     }
 
+    public class NotCondition : Condition
+    {
+        private Condition SubCondition;
+
+        public NotCondition(Condition subCondition)
+        {
+            SubCondition = subCondition;
+        }
+
+        public bool CheckCondition(JToken input)
+        {
+            return !SubCondition.CheckCondition(input);
+        }
+    }
+
     public class ValueCondition : Condition
     {
         private String Key;
