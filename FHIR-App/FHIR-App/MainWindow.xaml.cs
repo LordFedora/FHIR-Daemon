@@ -53,17 +53,7 @@ namespace FHIR_App
             Microsoft.Win32.RegistryKey key;
             key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
             key.SetValue("BIA_SERVER_NAME_1", "http://test.fhir.org/r4");
-            dynamic value = key.GetValue("BIA_LAST_UPDATED_1");
-            if (value is null)
-            {
-                timestamp = DateTime.MinValue; //because it can't be null for some reason
-            }
-            else
-            {
-                long time = long.Parse(value);
-                timestamp = DateTime.FromFileTimeUtc(time);
-            }
-            key.Close();
+            timestamp = getKey(1);
 
 
             mainLoopTimer = new Timer(1000 * 30);
@@ -141,7 +131,8 @@ namespace FHIR_App
             Microsoft.Win32.RegistryKey key;
             key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
             dynamic time = key.GetValue("BIA_LAST_UPDATED_" + index);
-
+            if (time is null) return DateTime.MinValue;
+            if (time is String) time = long.Parse(time);
             DateTime iReturn = DateTime.FromFileTimeUtc(time);
 
             key.Close();
