@@ -84,6 +84,7 @@ namespace FHIR_App
                     url = BaseAPIURL + SEARCH_PREFIX + timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fff") + SEARCH_SUFFIX;
                 }
                 dynamic temp = getJsonFromURL(url);
+                dynamic nextPages = temp?["link"];
                 dynamic entryArray = temp?.entry;
 
                 foreach (dynamic entry in entryArray)
@@ -147,6 +148,18 @@ namespace FHIR_App
             key.Close();
 
             return iReturn;
+        }
+
+        private static String getPage(int index)
+        {
+            Microsoft.Win32.RegistryKey key;
+            key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
+            String sReturn = key.GetValue("BIA_NEXT_PAGE_" + index).ToString();
+            if (sReturn is null) return null;
+
+            key.Close();
+
+            return sReturn;
         }
 
         private static object getJsonFromURL(string url)
