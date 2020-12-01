@@ -28,11 +28,16 @@ namespace FHIR_App
     public partial class MainWindow : Window
     {
         static private Timer mainLoopTimer;
+        static private int PAGE_COUNT = 10;
+        static private int ALERT_COUNT = 7;
+
+
         static private String BaseAPIURL = "http://test.fhir.org/r4";
         static private String SEARCH_PREFIX = "/AuditEvent/_search?_lastUpdated=gt";
-        static private String SEARCH_SUFFIX = "Z&_sort=_lastUpdated&_format=json&_count=10";
+        static private String SEARCH_SUFFIX = "Z&_sort=_lastUpdated&_format=json&_count="+PAGE_COUNT;
 
-        static private String SEARCH_INITIAL = "/AuditEvent/_search?_sort=_lastUpdated&_format=json&_count=10";
+        static private String SEARCH_INITIAL = "/AuditEvent/_search?_sort=_lastUpdated&_format=json&_count="+PAGE_COUNT;
+
 
         //http://test.fhir.org/r4/AuditEvent/_search?_lastUpdated=gt2020-11-06T21:52:30.300Z&_sort=_lastUpdated&_format=json&_count=10
         static private DateTime timestamp;
@@ -65,53 +70,55 @@ namespace FHIR_App
         private static void onTimerElapsed(Object source, ElapsedEventArgs e)
         {
 
-            string url = "";
-            if(timestamp == DateTime.MinValue)
-            {
-                url = BaseAPIURL + SEARCH_INITIAL;
-            }
-            else
-            {
-                url = BaseAPIURL + SEARCH_PREFIX + timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fff") + SEARCH_SUFFIX;
-            }
-            dynamic temp = getJsonFromURL(url);
-
-            dynamic entryArray = temp?.entry;
-
+            int displayedToasts = 0;
             string lastUpdated = "";
-
-            foreach(dynamic entry in entryArray)
+            while (displayedToasts < ALERT_COUNT)
             {
-                bool pass = true; //default case is it passes
-
-                foreach(Filter f in Filters)
+                string url = "";
+                if(timestamp == DateTime.MinValue)
                 {
-                    bool filterPass = f.CheckConditions(entry);
-                    if(filterPass && f.getState() == FilterStates.SHOW)
-                    {
-                        pass = true;
-                        break;
-                    }
-                    if(filterPass && f.getState() == FilterStates.HIDE)
-                    {
-                        pass = false;
-                        break;
-                    }
+                    url = BaseAPIURL + SEARCH_INITIAL;
                 }
-
-
-                if (pass)
+                else
                 {
-                    string text = "";
-                    text += entry?.resource?.type?.display;
-                    text += " (";
-                    text += entry?.resource?.subtype?[0]?.display;
-                    text += ")";
-                    createToast(text);
+                    url = BaseAPIURL + SEARCH_PREFIX + timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fff") + SEARCH_SUFFIX;
                 }
-                lastUpdated = entry?.resource?.meta?.lastUpdated;
+                dynamic temp = getJsonFromURL(url);
+                dynamic entryArray = temp?.entry;
+
+                foreach (dynamic entry in entryArray)
+                {
+                    bool pass = true; //default case is it passes
+
+                    foreach (Filter f in Filters)
+                    {
+                        bool filterPass = f.CheckConditions(entry);
+                        if (filterPass && f.getState() == FilterStates.SHOW)
+                        {
+                            pass = true;
+                            break;
+                        }
+                        if (filterPass && f.getState() == FilterStates.HIDE)
+                        {
+                            pass = false;
+                            break;
+                        }
+                    }
+
+
+                    if (pass)
+                    {
+                        string text = "";
+                        text += entry?.resource?.type?.display;
+                        text += " (";
+                        text += entry?.resource?.subtype?[0]?.display;
+                        text += ")";
+                        createToast(text);
+                        displayedToasts++;
+                    }
+                    lastUpdated = entry?.resource?.meta?.lastUpdated;
+                }
             }
-
             timestamp = DateTime.Parse(lastUpdated);
             updateKey(1, timestamp);
 
