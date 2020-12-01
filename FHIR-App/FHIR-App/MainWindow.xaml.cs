@@ -120,8 +120,19 @@ namespace FHIR_App
                     lastUpdated = entry?.resource?.meta?.lastUpdated;
                 }
 
+                dynamic nextPage = null;
+                foreach(dynamic links in nextPages)
+                {
+                    String relation = links?["relation"]?.ToString();
+                    if ("next".Equals(relation))
+                    {
+                        nextPage = links?["url"]?.ToString();
+                    }
+                }
+
                 timestamp = DateTime.Parse(lastUpdated);
                 updateKey(1, timestamp);
+                updatePage(1, nextPage);
                 if (entryArray.Count < PAGE_COUNT) break; //if we didn't get a full page then we're at the present and we'll never get a full page
             }
 
@@ -148,6 +159,15 @@ namespace FHIR_App
             key.Close();
 
             return iReturn;
+        }
+
+        private static void updatePage(int index, String url)
+        {
+            Microsoft.Win32.RegistryKey key;
+            key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
+            key.SetValue("BIA_NEXT_PAGE_" + index, url);
+
+            key.Close();
         }
 
         private static String getPage(int index)
