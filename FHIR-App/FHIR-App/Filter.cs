@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace FHIR_App
 {
-    class Filter
+    public class Filter
     {
 
         private List<Condition> Conditions;
