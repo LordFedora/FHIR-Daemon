@@ -19,6 +19,9 @@ using Microsoft.Toolkit.Uwp.Notifications;
 using Windows.UI;
 using Windows.UI.Notifications;
 using Newtonsoft.Json;
+using Hl7.Fhir.Model;
+using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Rest;
 
 namespace FHIR_App
 {
@@ -32,9 +35,10 @@ namespace FHIR_App
         static private int ALERT_COUNT = 7;
 
 
-        static private String BaseAPIURL = "http://test.fhir.org/r4/";
+        //static private String BaseAPIURL = "http://test.fhir.org/r4/";
         //static private String BaseAPIURL = "http://wildfhir4.aegis.net/fhir4-0-1/";
         //static private String BaseAPIURL = "http://sqlonfhir-r4.azurewebsites.net/fhir/";
+        static private String BaseAPIURL = "https://fhir.careevolution.com/Master.Adapter1.WebClient/api/fhir-cedars/";
         static private String SEARCH_PREFIX = "AuditEvent/_search?_lastUpdated=ge";
         static private String SEARCH_SUFFIX = "Z&_sort=_lastUpdated&_format=json&_count="+PAGE_COUNT;
 
@@ -75,18 +79,9 @@ namespace FHIR_App
             BaseURLS = new List<String>();
 
             /*
-            BaseURLS.Add("http://wildfhir4.aegis.net/fhir4-0-1/");
-            BaseURLS.Add("http://52.10.37.229:52774/hubonfhir/r4/");
-            BaseURLS.Add("http://sqlonfhir-r4.azurewebsites.net/fhir/");
+            BaseURLS.Add("http://hapi.fhir.org/baseR4/");
             BaseURLS.Add("https://terminz.azurewebsites.net/fhir/");
-            BaseURLS.Add("http://r4.heliossoftware.com/fhir/");
-            BaseURLS.Add("https://fhirsandbox1.tsysinteropsvcs.net:8100/r4/sites/123/");
-            BaseURLS.Add("https://davinci-drug-formulary-ri.logicahealth.org/fhir/");
-            BaseURLS.Add("https://davinci-plan-net-ri.logicahealth.org/fhir/");
-            BaseURLS.Add("https://davinci-crd.logicahealth.org/r4/");
-            BaseURLS.Add("https://appnameformularlyconnectathonjan2021.azurewebsites.net/R4/");
-            BaseURLS.Add("https://cds-sandbox.alphora.com/cqf-ruler-r4/fhir/");
-            BaseURLS.Add("https://cqm-sandbox.alphora.com/cqf-ruler-r4/fhir/");
+            BaseURLS.Add("https://wildfhir4.aegis.net/fhir4-0-1/");
 
 
             foreach (string baseurl in BaseURLS) testURL(baseurl);
@@ -249,7 +244,7 @@ namespace FHIR_App
                         if (type.ToString().Equals("AuditEvent"))
                         {
                             dynamic interactionList = resourceElement?["interaction"];
-                            if (type is null) continue;
+                            if (interactionList is null) continue;
                             
                             foreach(dynamic interactionElement in interactionList)
                             {

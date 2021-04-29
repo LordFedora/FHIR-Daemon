@@ -8,7 +8,9 @@ using System.IO;
 using NUnit.Framework;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Rest;
 using Newtonsoft.Json;
+using System.Net.Http;
 
 
 namespace FHIR_App
@@ -22,7 +24,8 @@ namespace FHIR_App
         private AuditEvent auditEvent;
         private string logFileName;
         private Bundle searchBundle;
-        private Condition filterCondition;
+        private Stack<Condition> filterConditions;
+        private string remoteAddr;
 
         public AuditGeneratorTests(ScenarioContext scenarioContext)
         {
@@ -33,7 +36,8 @@ namespace FHIR_App
             File.Delete(MainWindow.logFilePath);
             auditEvent = null;
             searchBundle = new Bundle();
-            filterCondition = null;
+            filterConditions = new Stack<Condition>();
+            remoteAddr = null;
 
             JsonConvert.DefaultSettings = () => new JsonSerializerSettings
             {
@@ -73,10 +77,7 @@ namespace FHIR_App
             auditEvent = new AuditEvent();
             auditEvent.Type = new Coding();
             auditEvent.Type.Display = "Test";
-            auditEvent.Subtype = new List<Coding>();
-            Coding subType = new Coding();
-            subType.Display = "SubTest";
-            auditEvent.Subtype.Add(subType);
+            auditEvent.Subtype = null;
         }
 
         [Given(@"The AuditEvent has a Type of (.*)")]
@@ -85,9 +86,38 @@ namespace FHIR_App
             if (auditEvent is null) throw new ArgumentNullException("auditEvent", "AuditEvent not initilized");
 
             auditEvent.Type.Display = p0;
-
-
         }
+
+        [Given(@"The AuditEvent has an ID of (.*)")]
+        public void GivenTheAuditEventHasAnIDOf(string p0)
+        {
+            if (auditEvent is null) throw new ArgumentNullException("auditEvent", "AuditEvent not initilized");
+
+            auditEvent.Id = p0;
+        }
+
+        [Given(@"The AuditEvent has a Subtype of (.*)")]
+        public void GivenTheAuditEventHasASubtypeOf(string p0)
+        {
+            if(auditEvent is null) throw new ArgumentNullException("auditEvent", "AuditEvent not initilized");
+
+            if(auditEvent.Subtype is null)
+            {
+                auditEvent.Subtype = new List<Coding>();
+            }
+
+            Coding subType = new Coding();
+            subType.Display = p0;
+            auditEvent.Subtype.Add(subType);
+        }
+
+        [Given(@"The Filter checks that (.*) Exists")]
+        public void GivenTheFilterChecksThatExists(string p0)
+        {
+            filterConditions.Push(new ExistsCondition(p0));
+        }
+
+
 
         [Given(@"A Filter exists")]
         public void GivenAFilterExists()
@@ -98,23 +128,60 @@ namespace FHIR_App
         [Given(@"The Filter checks a (.*) of (.*)")]
         public void GivenTheFilterChecks(string p0, string p1)
         {
-            if (!(filterCondition is null)) throw new ArgumentNullException("filterCondition", "filterCondition already exists");
-
-            filterCondition = new ValueCondition(p0, p1);
+            filterConditions.Push(new ValueCondition(p0, p1));
         }
 
         [Given(@"The Filter paths to (.*)")]
         public void GivenTheFilterChecksPath(string p0)
         {
-            if (filterCondition is null) throw new ArgumentNullException("filterCondition", "filterCondtion doesn't exist");
+            if (filterConditions.Count < 1) throw new ArgumentNullException("filterCondition", "Path Condition requires 1 argument");
 
-            filterCondition = new PathCondition(p0, filterCondition);
+            filterConditions.Push(new PathCondition(p0, filterConditions.Pop()));
         }
+
+        [Given(@"The Filter negates it's input")]
+        public void GivenTheFilterNegatesItSInput()
+        {
+            if (filterConditions.Count < 1) throw new ArgumentNullException("filterCondition", "NOT Condition requires 1 argument");
+
+            filterConditions.Push(new NotCondition(filterConditions.Pop()));
+        }
+
+        [Given(@"The Filter requires either to be true")]
+        public void GivenTheFilterRequiresEitherToBeTrue()
+        {
+            if (filterConditions.Count < 2) throw new ArgumentNullException("filterCondition", "OR Condition requires 2 arguments");
+
+            filterConditions.Push(new OrCondition(filterConditions.Pop()).addCondition(filterConditions.Pop()));
+        }
+
+        [Given(@"The Filter requires both to be true")]
+        public void GivenTheFilterRequiresBothToBeTrue()
+        {
+            if (filterConditions.Count < 2) throw new ArgumentNullException("filterCondition", "AND Condition requires 2 arguments");
+
+            filterConditions.Push(new AndCondition(filterConditions.Pop()).addCondition(filterConditions.Pop()));
+        }
+
+        [Given(@"The Filter checks the Types are (.*)/(.*)")]
+        public void GivenTheFilterChecksTheTypeIs2(string p0, string p1)
+        {
+            filterConditions.Push(new TypeCondition(p0, p1));
+        }
+
+        [Given(@"The Filter checks the Type is (.*)")]
+        public void GivenTheFilterChecksTheTypeIs1(string p0)
+        {
+            filterConditions.Push(new TypeCondition(p0));
+        }
+
+
+
 
         [Given(@"The Filter will (.*) matches")]
         public void GivenTheFilterMatches(string p0)
         {
-            if (filterCondition is null) throw new ArgumentNullException("filterCondition", "filterCondtion doesn't exist");
+            if (filterConditions.Count != 1) throw new ArgumentNullException("filterCondition", "filterCondtion doesn't exist");
 
             FilterStates state;
 
@@ -140,8 +207,13 @@ namespace FHIR_App
 
             }
 
-            MainWindow.Filters.Add(new Filter(state, filterCondition));
-            filterCondition = null;
+            MainWindow.Filters.Add(new Filter(state, filterConditions.Pop()));
+        }
+
+        [Given(@"The remote server is (.*)")]
+        public void GivenTheRemoteServerIs(string p0)
+        {
+            remoteAddr = p0;
         }
 
 
@@ -155,7 +227,7 @@ namespace FHIR_App
                 temp.Resource = auditEvent;
                 searchBundle.Entry.Add(temp);
             }
-            if (!(filterCondition is null)) throw new ArgumentNullException("filterCondition", "filterCondition should be null");
+            if (filterConditions.Count != 0) throw new ArgumentNullException("filterCondition", "filterCondition should be null");
 
             FhirJsonSerializer serializer = new FhirJsonSerializer();
 
@@ -164,6 +236,23 @@ namespace FHIR_App
             {
                 MainWindow.parseEntry(entry);
             }
+        }
+
+        [When(@"The system sends the audit events to the remote server")]
+        public void ThenTheSystemShouldSendTheAuditEventsToTheRemoteServer()
+        {
+            if (remoteAddr is null) throw new ArgumentNullException("Remote Address is null");
+
+            if (auditEvent is null) throw new ArgumentNullException("Audit Event is null");
+
+            FhirClient client = new FhirClient(remoteAddr);
+
+            AuditEvent tempEvent = client.Create<AuditEvent>(auditEvent);
+
+            auditEvent.Id = tempEvent.Id;
+            //is... is that it?
+
+
         }
 
 
@@ -191,6 +280,42 @@ namespace FHIR_App
         {
             Assert.AreEqual(p0, File.ReadAllLines(MainWindow.logFilePath).Length);
         }
+
+        [Then(@"Log file line number (.*) should be ""(.*)""")]
+        public void ThenLogFileLineNumberShouldBe(int p0, string p1)
+        {
+            if ((p0 < 0) || (p0 > File.ReadAllLines(MainWindow.logFilePath).Length)) throw new ArgumentException("Wrong number of lines in file");
+
+            Assert.AreEqual(p1, File.ReadAllLines(MainWindow.logFilePath)[p0-1]);
+        }
+
+        [Then(@"The remote server should have a matching audit event")]
+        public void ThenTheRemoteServerShouldHaveAMatchingAuditEvent()
+        {
+
+            if (remoteAddr is null) throw new ArgumentNullException("Remote Address is null");
+
+            if (auditEvent is null) throw new ArgumentNullException("Audit Event is null");
+
+
+            FhirClient client = new FhirClient(remoteAddr);
+
+            SearchParams searchParams = new SearchParams();
+
+            AuditEvent remoteEvent = client.Read<AuditEvent>("AuditEvent/"+auditEvent.Id);
+
+            Assert.AreEqual(auditEvent.Type.Display, remoteEvent.Type.Display);
+            
+            for(int i = 0; i < auditEvent.Subtype.Count; i++)
+            {
+                Assert.AreEqual(auditEvent.Subtype[i].Display, remoteEvent.Subtype[i].Display);
+
+            }
+
+
+            //is this testing enough?
+        }
+
 
 
     }

@@ -147,9 +147,14 @@ namespace FHIR_App
             {
                 return false;
             }
-            if(!(SubType is null) && resource?["subtype"]?["display"].ToString() != SubType)
-            {
-                return false;
+            if(!(SubType is null)){
+                Boolean tempb = false;
+                foreach(dynamic temp in resource?["subtype"])
+                {
+                    tempb = tempb || (temp?["display"].ToString() == SubType);
+                }
+            
+                return tempb;
             }
             return true;
         }
