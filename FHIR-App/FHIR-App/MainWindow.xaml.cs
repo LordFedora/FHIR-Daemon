@@ -35,14 +35,14 @@ namespace FHIR_App
         static private int ALERT_COUNT = 7;
 
 
-        //static private String BaseAPIURL = "http://test.fhir.org/r4/";
+        static private String BaseAPIURL = "http://test.fhir.org/r4/";
         //static private String BaseAPIURL = "http://wildfhir4.aegis.net/fhir4-0-1/";
         //static private String BaseAPIURL = "http://sqlonfhir-r4.azurewebsites.net/fhir/";
-        static private String BaseAPIURL = "https://fhir.careevolution.com/Master.Adapter1.WebClient/api/fhir-cedars/";
-        static private String SEARCH_PREFIX = "AuditEvent/_search?_lastUpdated=ge";
+        //static private String BaseAPIURL = "https://fhir.careevolution.com/Master.Adapter1.WebClient/api/fhir-cedars/";
+        static private String SEARCH_PREFIX = "AuditEvent?_lastUpdated=ge";
         static private String SEARCH_SUFFIX = "Z&_sort=_lastUpdated&_format=json&_count="+PAGE_COUNT;
 
-        static private String SEARCH_INITIAL = "AuditEvent/_search?_sort=_lastUpdated&_format=json&_count="+PAGE_COUNT;
+        static private String SEARCH_INITIAL = "AuditEvent?_sort=_lastUpdated&_format=json&_count="+PAGE_COUNT;
 
         static private String METADATA_SUFFIX = "metadata?_format=json";
 
@@ -77,25 +77,48 @@ namespace FHIR_App
             Filters = new List<Filter>();
             PageList = new Queue<KeyValuePair<int,String>>();
             BaseURLS = new List<String>();
-
-            /*
-            BaseURLS.Add("http://hapi.fhir.org/baseR4/");
-            BaseURLS.Add("https://terminz.azurewebsites.net/fhir/");
-            BaseURLS.Add("https://wildfhir4.aegis.net/fhir4-0-1/");
+            var BaseURLs = new List<String>();
+            MainWindow.logFilePath = "running.txt";
+            File.Delete(MainWindow.logFilePath);
 
 
-            foreach (string baseurl in BaseURLS) testURL(baseurl);
+            BaseURLs.Add("https://qa-rr-fhir2.maxmddirect.com/");
+            //BaseURLs.Add("https://scmfhirconnect.open.allscripts.com/fhir-testingDevMode/");
+            BaseURLs.Add("https://server.subscriptions.argo.run/r4/");
+            //BaseURLS.Add("http://fhir-dev.azuba.com/");
+            //BaseURLs.Add("https://fhirsandbox1.tsysinteropsvcs.net:8100/r4/sites/123/");
+            BaseURLs.Add("https://api.logicahealth.org/covidigtest/open/");
+            BaseURLs.Add("http://gic-sandbox.alphora.com/cqf-ruler-r4/fhir/");
+            //BaseURLs.Add("https://stage.healthtogo.me:8181/fhir/r4/stage/");
+            BaseURLs.Add("https://server.fire.ly/r4/");
+            BaseURLs.Add("http://hapi.fhir.org/baseR4/");
+            BaseURLs.Add("https://fhir.hausamconsulting.com/r4/");
+            //BaseURLS.Add("https://test.ahdis.ch/r4/");
+            BaseURLs.Add("https://fhirconnect.altarum.org/hapi-fhir-jpaserver-medmorph/fhir/");
+            //BaseURLs.Add("http://ecr.drajer.com/medmorph-kar/fhir/");
+            BaseURLs.Add("https://fhir-dev.mettles.com/interop/fhir/");
+            BaseURLs.Add("https://api.interop.community/PacioSandbox/open/");
+            //BaseURLS.Add("https://davinci-prior-auth.logicahealth.org/fhir/");
+            //BaseURLs.Add("https://hl7eu.onfhir.io/r4/");
+            //BaseURLS.Add("https://terminz.azurewebsites.net/fhir/");
+            BaseURLs.Add("https://wildfhir4.aegis.net/fhir4-0-1/");
+            BaseURLs.Add("http://34.94.253.50:8080/hapi-fhir-jpaserver/fhir/");
+            //BaseURLs.Add("https://saner.symptomatic.us/baseR4");
 
-            return; //TEMP DISABLE OF MAIN FUNCTION
-            */
+
+            //foreach (string baseurl in BaseURLs) testURL(baseurl);
+
+            //return; //TEMP DISABLE OF MAIN FUNCTION
+            
 
 
             //Filters.Add(new Filter(FilterStates.HIDE, new PathCondition("resource//type", new ValueCondition("display", "User Authentication"))));
 
-            Microsoft.Win32.RegistryKey key;
-            key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
-            timestamp = getKey(1);
+            //Microsoft.Win32.RegistryKey key;
+            //key = Microsoft.Win32.Registry.CurrentUser.CreateSubKey("BIA");
+            //timestamp = getKey(1);
 
+            /*
             {
                 int i = 1;
                 while (!(restoreServerPage(i,loadPage(i++)) is null));
@@ -106,9 +129,15 @@ namespace FHIR_App
                 addServerPage(1, BaseAPIURL);
                 //addServerPage(2, BaseAPIURL2);
             }
+            */
+
+            foreach(String s in BaseURLs)
+            {
+                addServerPage(BaseURLS.Count + 1, s);
+            }
 
             mainLoopTimer = new Timer(1000 * 30);
-            mainLoopTimer.AutoReset = false;
+            mainLoopTimer.AutoReset = true;
             mainLoopTimer.Elapsed += onTimerElapsed;
             mainLoopTimer.Enabled = true;
         }
@@ -128,46 +157,54 @@ namespace FHIR_App
                 if(!(temp?.issue?[0]?.severity is null) || temp is null)
                 {
                     //page expired, build the backup
-                    url = loadPage(page.Key);
-                    temp = getJsonFromURL(url);
-                    if(!(temp?.issue?[0]?.severity is null) || temp is null)
-                    {
-                        //even the backup errored, something went wrong
-                        createToast("WARNING, FHIR SERVER ERRORED\n" + temp?.issue?[0]?.details?.text?.Split("\n\r", 2)?[0] + "\n"+BaseURLS[page.Key]);
-                        break;
-                    }
+                    //url = loadPage(page.Key);
+                    //temp = getJsonFromURL(url);
+                    //if(!(temp?.issue?[0]?.severity is null) || temp is null)
+                    //{
+                    //even the backup errored, something went wrong
+                    createToast("WARNING, FHIR SERVER ERRORED\n" + temp?.issue?[0]?.details?.text?.Split("\n\r", 2)?[0] + "\n"+BaseURLS[page.Key-1]);
+                    //TEMPTEMPTEMPTEMP
+
+                    cycleServerPage(page.Key, null, DateTime.Now);
+                    continue ;
+                    //}
                 }
 
                 dynamic nextPages = temp?["link"];
                 dynamic entryArray = temp?.entry;
-                string searchID = getID(page.Key);
+                string searchID = null;// getID(page.Key);
                 bool foundId = (searchID is null); //if we don't have a search id, then we start with the first
-
-                foreach (dynamic entry in entryArray)
+                if (!(entryArray is null))
                 {
+                    foreach (dynamic entry in entryArray)
+                    {
 
-                    string id = entry?.resource?.id;
-                    if(id is null)
-                    {
-                        continue; //not worth looking when it's not up to spec
-                    } else if(!foundId && searchID.Equals(id))
-                    {
-                        foundId = true;
-                        continue; //this is the one we're starting after
-                    } else if (!foundId)
-                    {
-                        continue; //not there yet
+                        string id = entry?.resource?.id;
+                        if (id is null)
+                        {
+                            continue; //not worth looking when it's not up to spec
+                        }
+                        else if (!foundId && searchID.Equals(id))
+                        {
+                            foundId = true;
+                            continue; //this is the one we're starting after
+                        }
+                        else if (!foundId)
+                        {
+                            continue; //not there yet
+                        }
+
+                        if (parseEntry(entry))
+                        {
+                            displayedToasts++;
+                        }
+
+
+                        lastId = entry?.resource?.id;
+                        lastUpdated = entry?.resource?.meta?.lastUpdated;
                     }
-
-                    if (parseEntry(entry))
-                    {
-                        displayedToasts++;
-                    }
-                    
-
-                    lastId = entry?.resource?.id;
-                    lastUpdated = entry?.resource?.meta?.lastUpdated;
                 }
+                
 
                 dynamic nextPage = null;
                 foreach(dynamic links in nextPages)
@@ -179,11 +216,19 @@ namespace FHIR_App
                     }
                 }
 
-                timestamp = DateTime.Parse(lastUpdated);
-                updateKey(page.Key, timestamp);
-                savePage(page.Key, lastId, timestamp);
+                if (lastUpdated.Equals(""))
+                {
+                    timestamp = DateTime.Now;
+                }
+                else
+                {
+                    timestamp = DateTime.Parse(lastUpdated);
+                }
+                //updateKey(page.Key, timestamp);
+                //savePage(page.Key, lastId, timestamp);
                 cycleServerPage(page.Key, nextPage, timestamp);
-                if (entryArray.Count < PAGE_COUNT) break; //if we didn't get a full page then we're at the present and we'll never get a full page
+                //if ((entryArray?.Count ?? 0) == 0) createToast("Empty Server " + BaseURLS[page.Key-1]);
+                if ((entryArray?.Count ?? 0) < PAGE_COUNT) break; //if we didn't get a full page then we're at the present and we'll never get a full page
             }
 
         }
@@ -218,6 +263,35 @@ namespace FHIR_App
                 createToast(text);
                 return true;
             }
+            return false;
+        }
+
+        private static Boolean doesServerSupportAudits_(String baseUrl)
+        {
+
+            FhirClient client = new FhirClient(baseUrl); //does the / post fix alone
+
+            CapabilityStatement metadata = client.CapabilityStatement();
+            if (metadata?.Rest is null) return false;
+            foreach(CapabilityStatement.RestComponent restComponent in metadata.Rest)
+            {
+                if (restComponent?.Mode?.ToString()?.Equals("Server") ?? false)
+                {
+                    if (restComponent?.Resource is null) return false;
+                    foreach(CapabilityStatement.ResourceComponent resourceComponent in restComponent.Resource)
+                    {
+                        if(resourceComponent?.Type?.ToString()?.Equals("AuditEvent") ?? false)
+                        {
+                            if (resourceComponent?.Interaction is null) return false;
+                            foreach(CapabilityStatement.ResourceInteractionComponent resourceInteractionComponent in resourceComponent.Interaction)
+                            {
+                                if (resourceInteractionComponent?.Code?.ToString()?.Equals("Read") ?? false) return true;
+                            }
+                        }
+                    }
+                }
+            }
+
             return false;
         }
 
@@ -262,6 +336,9 @@ namespace FHIR_App
 
             return false;
         }
+
+        //TEMP
+        /*
 
         private static void updateKey(int index, DateTime time)
         {
@@ -351,6 +428,7 @@ namespace FHIR_App
 
             return sReturn;
         }
+        */
 
         private static object getJsonFromURL(string url)
         {
@@ -401,16 +479,32 @@ namespace FHIR_App
         private static void addServerPage(int index, string baseUrl)
         {
             if (baseUrl.Last() != '/') baseUrl = baseUrl += '/';
-            if (!doesServerSupportAudits(baseUrl))
+
+            bool oldMethod = doesServerSupportAudits(baseUrl);
+            bool newMethod = doesServerSupportAudits_(baseUrl);
+
+            if (oldMethod != newMethod)
+            {
+                throw new Exception("Shits fucked yo");
+            }
+
+            if (!oldMethod || !newMethod)
             {
                 createToast("Server doesn't support audits");
             }
             else
             {
-                DateTime date = new DateTime();
-                PageList.Enqueue(new KeyValuePair<int, String>(index, baseUrl + SEARCH_PREFIX + date.ToString("yyyy-MM-ddTHH:mm:ss") + SEARCH_SUFFIX));
+                DateTime date = DateTime.Now.ToUniversalTime();
+                String url = baseUrl + SEARCH_PREFIX + date.ToString("yyyy-MM-ddTHH:mm:ss") + SEARCH_SUFFIX;
+                PageList.Enqueue(new KeyValuePair<int, String>(index, url));
+
+                using (StreamWriter outputFile = new StreamWriter(logFilePath, true))
+                {
+                    outputFile.WriteLine("Server added: " + url);
+                }
+
                 BaseURLS.Add(baseUrl);
-                updatePage(PageList.Count, baseUrl);
+                //TEMP updatePage(PageList.Count, baseUrl);
             }
         }
 
@@ -421,11 +515,11 @@ namespace FHIR_App
             {
                 if(newUrl is null)
                 {
-                    newUrl = queueTop.Value + SEARCH_PREFIX + timestamp.ToString("yyyy-MM-ddTHH:mm:ss") + SEARCH_SUFFIX;
+                    newUrl = BaseURLS[index-1] + SEARCH_PREFIX + timestamp.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") + SEARCH_SUFFIX;
                 }
 
                 PageList.Enqueue(new KeyValuePair<int, String>(index,newUrl));
-                updatePage(index, newUrl);
+                //updatePage(index, newUrl);
             } else //should never occur
             {
                 PageList.Enqueue(queueTop);
@@ -449,6 +543,22 @@ namespace FHIR_App
             dynamic jsonDump;
 
             Console.Write(url);
+
+            bool oldMethod = doesServerSupportAudits(url);
+            bool newMethod = doesServerSupportAudits_(url);
+
+            if (oldMethod != newMethod)
+            {
+                Console.WriteLine(" | Conflict");
+                return;
+            }
+
+            if (!oldMethod || !newMethod)
+            {
+                Console.WriteLine(" | Server doesn't support audits");
+            }
+
+
             try
             {
                 jsonDump = getJsonFromURL(url + SEARCH_INITIAL);
@@ -459,15 +569,59 @@ namespace FHIR_App
 
             if (jsonDump?["total"] is null)
             {
-                Console.WriteLine(" Errored");
+                if ((jsonDump?["entry"]?.Count ?? 0) > 0)
+                {
+                    Console.Write(" | No Total ");
+                } else
+                {
+                    Console.Write(" | No Audits ");
+                }
             }
             else
             {
                 Console.Write(" | ");
-                Console.WriteLine(jsonDump?["total"]);
+                Console.Write(jsonDump?["total"]);
             }
+
+
+            if (jsonDump?["links"] is null) {
+                Console.Write(" | No Links ");
+            }
+            else
+            {
+                dynamic nextPages = jsonDump?["links"];
+                bool tempbool = true;
+                foreach (dynamic links in nextPages)
+                {
+                    String relation = links?["relation"]?.ToString();
+                    if ("next".Equals(relation))
+                    {
+                        Console.Write(" | Next Page ");
+                        tempbool = false;
+                        break;
+                    }
+                }
+                if (tempbool)
+                {
+                    Console.Write(" | No Next Page ");
+                }
+            }
+            Console.WriteLine("");
         }
 
 
+        private static void onTimerElapsed_(Object source, ElapsedEventArgs e)
+        {
+            int displayedToasts = 0;
+            string lastUpdated = "";
+            string lastId = "";
+            while (displayedToasts < ALERT_COUNT)
+            {
+                KeyValuePair<int, String> page = getServerPage();
+                string url = page.Value;
+                dynamic temp = getJsonFromURL(url);
+            }
+
+        }
     }
 }

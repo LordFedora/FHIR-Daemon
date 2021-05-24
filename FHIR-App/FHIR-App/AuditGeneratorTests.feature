@@ -144,3 +144,19 @@ Scenario: Testing Sending Event to remote
 	When The system sends the audit events to the remote server
 	Then The remote server should have a matching audit event
 	
+Scenario: Testing Sending Events to all Remotes
+	Given An AuditEvent exists
+	And The AuditEvent has a Type of Testing
+	And The AuditEvent has a Subtype of SubTest
+	And The remote server is <Server>
+	When The system sends the audit events to the remote server
+	Then The remote server should have a matching audit event
+
+	Examples: 
+	| Server                                             |
+	| https://server.subscriptions.argo.run/r4/          |
+	| https://api.logicahealth.org/covidigtest/open/     |
+	| http://gic-sandbox.alphora.com/cqf-ruler-r4/fhir/  |
+	| http://hapi.fhir.org/baseR4/                       |
+	| https://wildfhir4.aegis.net/fhir4-0-1/             |
+	| http://34.94.253.50:8080/hapi-fhir-jpaserver/fhir/ |
